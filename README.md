@@ -90,6 +90,48 @@ reach mcp install --global
 - **128-bit random Bearer Token** — generated at `agent init`, never transmitted in plaintext
 - **Process group isolation** — each command runs in its own process group; cleanup is guaranteed on timeout
 - **Atomic file writes** — write to a temp file, `fsync`, then rename; no partial writes
+- **Command blacklist** — blocks dangerous commands (`rm -rf /`, `mkfs`, `dd` to disk, fork bomb, etc.)
+- **AUTH_FAIL logging** — failed auth attempts are logged with source IP for fail2ban integration
+
+### Security Configuration
+
+All security features are enabled by default. Configure in `/etc/reach-agent/config.yaml`:
+
+```yaml
+security:
+  # Command blacklist (default: true)
+  command_blacklist: true
+  # Add your own blocked patterns (regex, appended to built-in list)
+  custom_blacklist:
+    - "\\bshutdown\\b"
+    - "\\breboot\\b"
+  # AUTH_FAIL log for fail2ban (default: true)
+  auth_fail_log: true
+```
+
+### fail2ban Integration
+
+Reach logs `AUTH_FAIL from <IP>` to systemd journal on every failed auth attempt. To auto-ban after 3 failures:
+
+```ini
+# /etc/fail2ban/filter.d/reach-agent.conf
+[Definition]
+failregex = AUTH_FAIL from <HOST>:
+journalmatch = _SYSTEMD_UNIT=reach-agent.service
+```
+
+```ini
+# /etc/fail2ban/jail.d/reach-agent.conf
+[reach-agent]
+enabled = true
+backend = systemd
+filter = reach-agent
+maxretry = 3
+findtime = 600
+bantime = 3600
+banaction = ufw
+port = 7100
+```
 
 ---
 

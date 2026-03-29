@@ -94,7 +94,8 @@ func handleExec(cfg *AgentConfig, w http.ResponseWriter, r *http.Request) {
 		req.Timeout = cfg.MaxTimeout
 	}
 
-	result := Execute(req.Command, req.Timeout, cfg.MaxOutput)
+	blacklist := BuildBlacklist(&cfg.Security)
+	result := Execute(req.Command, req.Timeout, cfg.MaxOutput, blacklist)
 	jsonResponse(w, result)
 }
 

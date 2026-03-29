@@ -131,6 +131,7 @@ func Init(configDir string) (*InitResult, error) {
 	keyFile.Close()
 
 	// 写 config.yaml (0600)
+	trueVal := true
 	cfg := &AgentConfig{
 		Port:       7100,
 		Token:      token,
@@ -138,6 +139,10 @@ func Init(configDir string) (*InitResult, error) {
 		TLSKey:     keyPath,
 		MaxOutput:  10485760,
 		MaxTimeout: 600,
+		Security: SecurityConfig{
+			CommandBlacklist: &trueVal,
+			AuthFailLog:      &trueVal,
+		},
 	}
 	configPath := filepath.Join(configDir, "config.yaml")
 	configFile, err := os.OpenFile(configPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)

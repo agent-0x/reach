@@ -20,6 +20,27 @@ type AgentConfig struct {
 	TLSKey     string `yaml:"tls_key"`
 	MaxOutput  int    `yaml:"max_output"`
 	MaxTimeout int    `yaml:"max_timeout"`
+
+	// 安全配置
+	Security SecurityConfig `yaml:"security"`
+}
+
+// SecurityConfig 安全相关可选配置
+type SecurityConfig struct {
+	// 命令黑名单开关 (默认 true)
+	CommandBlacklist *bool `yaml:"command_blacklist"`
+	// 自定义黑名单正则（追加到内置列表）
+	CustomBlacklist []string `yaml:"custom_blacklist"`
+	// AUTH_FAIL 日志（供 fail2ban 使用，默认 true）
+	AuthFailLog *bool `yaml:"auth_fail_log"`
+}
+
+// boolDefault 返回指针布尔值，nil 时返回默认值
+func boolDefault(p *bool, def bool) bool {
+	if p == nil {
+		return def
+	}
+	return *p
 }
 
 // LoadConfig 从 yaml 文件加载配置
@@ -82,13 +103,17 @@ func authMiddleware(cfg *AgentConfig, next func(*AgentConfig, http.ResponseWrite
 
 		auth := r.Header.Get("Authorization")
 		if !strings.HasPrefix(auth, "Bearer ") {
-			log.Printf("AUTH_FAIL from %s: missing token on %s", remoteIP, r.URL.Path)
+			if boolDefault(cfg.Security.AuthFailLog, true) {
+				log.Printf("AUTH_FAIL from %s: missing token on %s", remoteIP, r.URL.Path)
+			}
 			jsonError(w, "missing or invalid Authorization header", http.StatusUnauthorized)
 			return
 		}
 		token := strings.TrimPrefix(auth, "Bearer ")
 		if token != cfg.Token {
-			log.Printf("AUTH_FAIL from %s: invalid token on %s", remoteIP, r.URL.Path)
+			if boolDefault(cfg.Security.AuthFailLog, true) {
+				log.Printf("AUTH_FAIL from %s: invalid token on %s", remoteIP, r.URL.Path)
+			}
 			jsonError(w, "invalid token", http.StatusUnauthorized)
 			return
 		}

@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-// 危险命令黑名单 — 正则匹配
-var dangerousPatterns = []*regexp.Regexp{
+// 内置危险命令黑名单 — 正则匹配
+var builtinDangerousPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`\brm\s+(-[a-zA-Z]*f[a-zA-Z]*\s+)?/\s*$`),          // rm -rf /
 	regexp.MustCompile(`\brm\s+(-[a-zA-Z]*f[a-zA-Z]*\s+)?/\*`),            // rm -rf /*
 	regexp.MustCompile(`\brm\s+(-[a-zA-Z]*f[a-zA-Z]*\s+)?/(bin|boot|dev|etc|lib|proc|sbin|sys|usr|var)\b`), // rm system dirs
@@ -26,10 +26,27 @@ var dangerousPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`>\s*/etc/shadow`),                                   // overwrite shadow
 }
 
+// BuildBlacklist 根据配置构建最终黑名单
+func BuildBlacklist(cfg *SecurityConfig) []*regexp.Regexp {
+	if cfg != nil && cfg.CommandBlacklist != nil && !*cfg.CommandBlacklist {
+		return nil // 黑名单被显式关闭
+	}
+	patterns := make([]*regexp.Regexp, len(builtinDangerousPatterns))
+	copy(patterns, builtinDangerousPatterns)
+	if cfg != nil {
+		for _, p := range cfg.CustomBlacklist {
+			if r, err := regexp.Compile(p); err == nil {
+				patterns = append(patterns, r)
+			}
+		}
+	}
+	return patterns
+}
+
 // CheckDangerous 检查命令是否在黑名单中
-func CheckDangerous(command string) error {
+func CheckDangerous(command string, patterns []*regexp.Regexp) error {
 	cmd := strings.TrimSpace(command)
-	for _, p := range dangerousPatterns {
+	for _, p := range patterns {
 		if p.MatchString(cmd) {
 			return fmt.Errorf("blocked: command matches dangerous pattern (%s)", p.String())
 		}
@@ -46,8 +63,8 @@ type ExecResult struct {
 }
 
 // Execute 在独立进程组中执行 shell 命令，支持超时与输出截断
-func Execute(command string, timeout int, maxOutput int) *ExecResult {
-	if err := CheckDangerous(command); err != nil {
+func Execute(command string, timeout int, maxOutput int, blacklist []*regexp.Regexp) *ExecResult {
+	if err := CheckDangerous(command, blacklist); err != nil {
 		return &ExecResult{Stderr: err.Error(), ExitCode: 1}
 	}
 
