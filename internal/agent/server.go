@@ -96,30 +96,6 @@ func handleHealth(cfg *AgentConfig, w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func handleInfo(cfg *AgentConfig, w http.ResponseWriter, r *http.Request) {
-	jsonError(w, "not implemented", http.StatusNotImplemented)
-}
-
-func handleExec(cfg *AgentConfig, w http.ResponseWriter, r *http.Request) {
-	jsonError(w, "not implemented", http.StatusNotImplemented)
-}
-
-func handleRead(cfg *AgentConfig, w http.ResponseWriter, r *http.Request) {
-	jsonError(w, "not implemented", http.StatusNotImplemented)
-}
-
-func handleWrite(cfg *AgentConfig, w http.ResponseWriter, r *http.Request) {
-	jsonError(w, "not implemented", http.StatusNotImplemented)
-}
-
-func handleUpload(cfg *AgentConfig, w http.ResponseWriter, r *http.Request) {
-	jsonError(w, "not implemented", http.StatusNotImplemented)
-}
-
-func handleDownload(cfg *AgentConfig, w http.ResponseWriter, r *http.Request) {
-	jsonError(w, "not implemented", http.StatusNotImplemented)
-}
-
 // --- Helpers ---
 
 func jsonResponse(w http.ResponseWriter, v interface{}) {
