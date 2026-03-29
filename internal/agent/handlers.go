@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/shirou/gopsutil/v4/cpu"
@@ -19,10 +20,14 @@ func handleInfo(cfg *AgentConfig, w http.ResponseWriter, r *http.Request) {
 
 	hostInfo, err := host.Info()
 	osName := ""
+	archName := runtime.GOARCH
 	var uptimeSecs uint64
-	if err == nil {
+	if err == nil && hostInfo != nil {
 		osName = hostInfo.OS
 		uptimeSecs = hostInfo.Uptime
+		if hostInfo.KernelArch != "" {
+			archName = hostInfo.KernelArch
+		}
 	}
 
 	cpuInfos, err := cpu.Info()
@@ -52,7 +57,7 @@ func handleInfo(cfg *AgentConfig, w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, map[string]interface{}{
 		"hostname":      hostname,
 		"os":            osName,
-		"arch":          hostInfo.KernelArch,
+		"arch":          archName,
 		"cpu_count":     cpuCount,
 		"mem_total_mb":  memTotalMB,
 		"mem_free_mb":   memFreeMB,

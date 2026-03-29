@@ -62,6 +62,28 @@ type ExecResult struct {
 	Truncated bool   `json:"truncated"`
 }
 
+// boundedWriter 有界写入器，超出 limit 的数据被丢弃
+type boundedWriter struct {
+	buf   bytes.Buffer
+	limit int
+}
+
+func (w *boundedWriter) Write(p []byte) (int, error) {
+	remaining := w.limit - w.buf.Len()
+	if remaining <= 0 {
+		return len(p), nil // 丢弃但不报错，让进程继续
+	}
+	if len(p) > remaining {
+		w.buf.Write(p[:remaining])
+		return len(p), nil
+	}
+	return w.buf.Write(p)
+}
+
+func (w *boundedWriter) Truncated() bool {
+	return w.buf.Len() >= w.limit
+}
+
 // Execute 在独立进程组中执行 shell 命令，支持超时与输出截断
 func Execute(command string, timeout int, maxOutput int, blacklist []*regexp.Regexp) *ExecResult {
 	if err := CheckDangerous(command, blacklist); err != nil {
@@ -71,43 +93,48 @@ func Execute(command string, timeout int, maxOutput int, blacklist []*regexp.Reg
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "sh", "-c", command)
+	cmd := exec.Command("sh", "-c", command)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
-	var stdoutBuf, stderrBuf bytes.Buffer
-	cmd.Stdout = &stdoutBuf
-	cmd.Stderr = &stderrBuf
+	// 有界缓冲: 运行时就限制内存，不是事后截断
+	stdoutW := &boundedWriter{limit: maxOutput}
+	stderrW := &boundedWriter{limit: maxOutput}
+	cmd.Stdout = stdoutW
+	cmd.Stderr = stderrW
 
-	err := cmd.Run()
-
-	result := &ExecResult{}
-
-	// 处理 stdout
-	stdoutBytes := stdoutBuf.Bytes()
-	if len(stdoutBytes) > maxOutput {
-		stdoutBytes = stdoutBytes[:maxOutput]
-		result.Truncated = true
+	if err := cmd.Start(); err != nil {
+		return &ExecResult{Stderr: err.Error(), ExitCode: 1}
 	}
-	result.Stdout = string(stdoutBytes)
 
-	// 处理 stderr
-	stderrBytes := stderrBuf.Bytes()
-	if len(stderrBytes) > maxOutput {
-		stderrBytes = stderrBytes[:maxOutput]
-		result.Truncated = true
+	// 在 goroutine 里 Wait，主线程监控超时
+	done := make(chan error, 1)
+	go func() { done <- cmd.Wait() }()
+
+	var err error
+	select {
+	case err = <-done:
+		// 正常结束
+	case <-ctx.Done():
+		// 超时: 杀整个进程组
+		if cmd.Process != nil {
+			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		}
+		<-done // 等 Wait 返回
+		return &ExecResult{
+			Stdout:    stdoutW.buf.String(),
+			Stderr:    stderrW.buf.String() + "\nreach: command timed out",
+			ExitCode:  124,
+			Truncated: stdoutW.Truncated() || stderrW.Truncated(),
+		}
 	}
-	result.Stderr = string(stderrBytes)
+
+	result := &ExecResult{
+		Stdout:    stdoutW.buf.String(),
+		Stderr:    stderrW.buf.String(),
+		Truncated: stdoutW.Truncated() || stderrW.Truncated(),
+	}
 
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			// 超时：杀整个进程组
-			if cmd.Process != nil {
-				_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-			}
-			result.ExitCode = 124
-			result.Stderr += fmt.Sprintf("\nreach: command timed out")
-			return result
-		}
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			result.ExitCode = exitErr.ExitCode()
 		} else {

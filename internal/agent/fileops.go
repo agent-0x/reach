@@ -16,6 +16,7 @@ type ReadResult struct {
 }
 
 // ReadFile 读取文件内容，最多 maxSize 字节
+// 拒绝非常规文件（设备、管道、/proc 等），防止无限阻塞或内存爆炸
 func ReadFile(path string, maxSize int) (*ReadResult, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -27,24 +28,25 @@ func ReadFile(path string, maxSize int) (*ReadResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("stat file: %w", err)
 	}
-	size := int(info.Size())
 
-	result := &ReadResult{Size: size}
+	// 只允许常规文件
+	if !info.Mode().IsRegular() {
+		return nil, fmt.Errorf("not a regular file: %s", path)
+	}
 
-	if size <= maxSize {
-		data, err := io.ReadAll(f)
-		if err != nil {
-			return nil, fmt.Errorf("read file: %w", err)
-		}
-		result.Content = string(data)
-	} else {
-		buf := make([]byte, maxSize)
-		n, err := io.ReadFull(f, buf)
-		if err != nil && err != io.ErrUnexpectedEOF {
-			return nil, fmt.Errorf("read file: %w", err)
-		}
-		result.Content = string(buf[:n])
+	// 始终通过 LimitReader 读取，不信任 Stat().Size()
+	limitedReader := io.LimitReader(f, int64(maxSize)+1)
+	data, err := io.ReadAll(limitedReader)
+	if err != nil {
+		return nil, fmt.Errorf("read file: %w", err)
+	}
+
+	result := &ReadResult{Size: int(info.Size())}
+	if len(data) > maxSize {
+		result.Content = string(data[:maxSize])
 		result.Truncated = true
+	} else {
+		result.Content = string(data)
 	}
 
 	return result, nil
@@ -109,6 +111,12 @@ func WriteFile(path string, content string, mode string) error {
 	// 原子重命名
 	if err := os.Rename(tmpPath, path); err != nil {
 		return fmt.Errorf("rename to target: %w", err)
+	}
+
+	// fsync 目录确保 rename 持久化
+	if d, err := os.Open(dir); err == nil {
+		_ = d.Sync()
+		d.Close()
 	}
 
 	success = true
