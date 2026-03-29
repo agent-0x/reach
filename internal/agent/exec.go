@@ -5,9 +5,37 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"regexp"
+	"strings"
 	"syscall"
 	"time"
 )
+
+// 危险命令黑名单 — 正则匹配
+var dangerousPatterns = []*regexp.Regexp{
+	regexp.MustCompile(`\brm\s+(-[a-zA-Z]*f[a-zA-Z]*\s+)?/\s*$`),          // rm -rf /
+	regexp.MustCompile(`\brm\s+(-[a-zA-Z]*f[a-zA-Z]*\s+)?/\*`),            // rm -rf /*
+	regexp.MustCompile(`\brm\s+(-[a-zA-Z]*f[a-zA-Z]*\s+)?/(bin|boot|dev|etc|lib|proc|sbin|sys|usr|var)\b`), // rm system dirs
+	regexp.MustCompile(`\bmkfs\b`),                                          // format filesystem
+	regexp.MustCompile(`\bdd\b.*\bof=/dev/[sh]d`),                          // dd to disk
+	regexp.MustCompile(`>\s*/dev/[sh]d`),                                    // write to disk device
+	regexp.MustCompile(`:(){ :\|:& };:`),                                    // fork bomb
+	regexp.MustCompile(`\bchmod\s+(-[a-zA-Z]*\s+)?777\s+/\s*$`),           // chmod 777 /
+	regexp.MustCompile(`\bchown\s+(-[a-zA-Z]*\s+)?.*\s+/\s*$`),            // chown /
+	regexp.MustCompile(`>\s*/etc/passwd`),                                   // overwrite passwd
+	regexp.MustCompile(`>\s*/etc/shadow`),                                   // overwrite shadow
+}
+
+// CheckDangerous 检查命令是否在黑名单中
+func CheckDangerous(command string) error {
+	cmd := strings.TrimSpace(command)
+	for _, p := range dangerousPatterns {
+		if p.MatchString(cmd) {
+			return fmt.Errorf("blocked: command matches dangerous pattern (%s)", p.String())
+		}
+	}
+	return nil
+}
 
 // ExecResult 命令执行结果
 type ExecResult struct {
@@ -19,6 +47,10 @@ type ExecResult struct {
 
 // Execute 在独立进程组中执行 shell 命令，支持超时与输出截断
 func Execute(command string, timeout int, maxOutput int) *ExecResult {
+	if err := CheckDangerous(command); err != nil {
+		return &ExecResult{Stderr: err.Error(), ExitCode: 1}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 
