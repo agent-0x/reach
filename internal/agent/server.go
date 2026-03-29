@@ -3,6 +3,8 @@ package agent
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -73,13 +75,20 @@ func Serve(cfg *AgentConfig) error {
 // authMiddleware 检查 Authorization: Bearer <token>
 func authMiddleware(cfg *AgentConfig, next func(*AgentConfig, http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		remoteIP := r.RemoteAddr
+		if host, _, err := net.SplitHostPort(remoteIP); err == nil {
+			remoteIP = host
+		}
+
 		auth := r.Header.Get("Authorization")
 		if !strings.HasPrefix(auth, "Bearer ") {
+			log.Printf("AUTH_FAIL from %s: missing token on %s", remoteIP, r.URL.Path)
 			jsonError(w, "missing or invalid Authorization header", http.StatusUnauthorized)
 			return
 		}
 		token := strings.TrimPrefix(auth, "Bearer ")
 		if token != cfg.Token {
+			log.Printf("AUTH_FAIL from %s: invalid token on %s", remoteIP, r.URL.Path)
 			jsonError(w, "invalid token", http.StatusUnauthorized)
 			return
 		}
