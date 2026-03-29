@@ -109,10 +109,12 @@ func Init(configDir string) (*InitResult, error) {
 		return nil, fmt.Errorf("create cert.pem: %w", err)
 	}
 	if err := pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: certDER}); err != nil {
-		certFile.Close()
+		_ = certFile.Close()
 		return nil, fmt.Errorf("write cert.pem: %w", err)
 	}
-	certFile.Close()
+	if err := certFile.Close(); err != nil {
+		return nil, fmt.Errorf("close cert.pem: %w", err)
+	}
 
 	// 写 key.pem (0600)
 	keyDER, err := x509.MarshalECPrivateKey(privKey)
@@ -125,10 +127,12 @@ func Init(configDir string) (*InitResult, error) {
 		return nil, fmt.Errorf("create key.pem: %w", err)
 	}
 	if err := pem.Encode(keyFile, &pem.Block{Type: "EC PRIVATE KEY", Bytes: keyDER}); err != nil {
-		keyFile.Close()
+		_ = keyFile.Close()
 		return nil, fmt.Errorf("write key.pem: %w", err)
 	}
-	keyFile.Close()
+	if err := keyFile.Close(); err != nil {
+		return nil, fmt.Errorf("close key.pem: %w", err)
+	}
 
 	// 写 config.yaml (0600)
 	trueVal := true
@@ -152,10 +156,12 @@ func Init(configDir string) (*InitResult, error) {
 	enc := yaml.NewEncoder(configFile)
 	enc.SetIndent(2)
 	if err := enc.Encode(cfg); err != nil {
-		configFile.Close()
+		_ = configFile.Close()
 		return nil, fmt.Errorf("write config.yaml: %w", err)
 	}
-	configFile.Close()
+	if err := configFile.Close(); err != nil {
+		return nil, fmt.Errorf("close config.yaml: %w", err)
+	}
 
 	return &InitResult{
 		Token:       token,

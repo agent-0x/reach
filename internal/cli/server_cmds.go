@@ -61,7 +61,7 @@ func addCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("connect to server: %w", err)
 			}
-			fmt.Fprintf(os.Stdout, "Fingerprint: sha256:%s\n", fp)
+			_, _ = fmt.Fprintf(os.Stdout, "Fingerprint: sha256:%s\n", fp)
 
 			// 验证 health（带指纹）
 			verifiedCfg := &client.ServerConfig{
@@ -89,7 +89,7 @@ func addCmd() *cobra.Command {
 				return fmt.Errorf("save config: %w", err)
 			}
 
-			fmt.Fprintf(os.Stdout, "Server %q added successfully.\n", name)
+			_, _ = fmt.Fprintf(os.Stdout, "Server %q added successfully.\n", name)
 			return nil
 		},
 	}
@@ -119,7 +119,7 @@ func removeCmd() *cobra.Command {
 			if err := cfg.Save(); err != nil {
 				return fmt.Errorf("save config: %w", err)
 			}
-			fmt.Fprintf(os.Stdout, "Server %q removed.\n", name)
+			_, _ = fmt.Fprintf(os.Stdout, "Server %q removed.\n", name)
 			return nil
 		},
 	}
@@ -137,17 +137,17 @@ func listCmd() *cobra.Command {
 				return fmt.Errorf("load config: %w", err)
 			}
 			if len(cfg.Servers) == 0 {
-				fmt.Fprintln(os.Stdout, "No servers configured. Use 'reach add' to add one.")
+				_, _ = fmt.Fprintln(os.Stdout, "No servers configured. Use 'reach add' to add one.")
 				return nil
 			}
-			fmt.Fprintf(os.Stdout, "%-20s  %s\n", "NAME", "ADDRESS")
-			fmt.Fprintf(os.Stdout, "%-20s  %s\n", "----", "-------")
+			_, _ = fmt.Fprintf(os.Stdout, "%-20s  %s\n", "NAME", "ADDRESS")
+			_, _ = fmt.Fprintf(os.Stdout, "%-20s  %s\n", "----", "-------")
 			for name, srv := range cfg.Servers {
 				port := srv.Port
 				if port == 0 {
 					port = 7100
 				}
-				fmt.Fprintf(os.Stdout, "%-20s  %s:%d\n", name, srv.Host, port)
+				_, _ = fmt.Fprintf(os.Stdout, "%-20s  %s:%d\n", name, srv.Host, port)
 			}
 			return nil
 		},
@@ -188,13 +188,13 @@ func healthCmd() *cobra.Command {
 			}
 			ok, err := c.Health()
 			if err != nil {
-				fmt.Fprintf(os.Stdout, "FAIL: %v\n", err)
+				_, _ = fmt.Fprintf(os.Stdout, "FAIL: %v\n", err)
 				return nil
 			}
 			if ok {
-				fmt.Fprintln(os.Stdout, "OK")
+				_, _ = fmt.Fprintln(os.Stdout, "OK")
 			} else {
-				fmt.Fprintln(os.Stdout, "FAIL")
+				_, _ = fmt.Fprintln(os.Stdout, "FAIL")
 			}
 			return nil
 		},
@@ -211,7 +211,7 @@ func printMap(m map[string]interface{}) {
 	}
 	for _, k := range keys {
 		if v, ok := m[k]; ok {
-			fmt.Fprintf(os.Stdout, "%-16s %v\n", k+":", v)
+			_, _ = fmt.Fprintf(os.Stdout, "%-16s %v\n", k+":", v)
 		}
 	}
 	// 打印任何不在预定义列表中的额外字段
@@ -221,7 +221,7 @@ func printMap(m map[string]interface{}) {
 	}
 	for k, v := range m {
 		if !known[k] {
-			fmt.Fprintf(os.Stdout, "%-16s %v\n", k+":", v)
+			_, _ = fmt.Fprintf(os.Stdout, "%-16s %v\n", k+":", v)
 		}
 	}
 }

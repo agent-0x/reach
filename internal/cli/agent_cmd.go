@@ -45,13 +45,13 @@ func init() {
 			// 获取本机非 loopback IP 用于提示
 			thisIP := detectOutboundIP()
 
-			fmt.Fprintln(os.Stdout, "=== Reach Agent Initialized ===")
-			fmt.Fprintf(os.Stdout, "Config: %s\n", result.ConfigPath)
-			fmt.Fprintf(os.Stdout, "Token:  %s\n", result.Token)
-			fmt.Fprintf(os.Stdout, "Fingerprint: sha256:%s\n", result.Fingerprint)
-			fmt.Fprintln(os.Stdout, "")
-			fmt.Fprintln(os.Stdout, "Add this server to your local machine:")
-			fmt.Fprintf(os.Stdout, "  reach add <name> --host %s --token %s\n", thisIP, result.Token)
+			_, _ = fmt.Fprintln(os.Stdout, "=== Reach Agent Initialized ===")
+			_, _ = fmt.Fprintf(os.Stdout, "Config: %s\n", result.ConfigPath)
+			_, _ = fmt.Fprintf(os.Stdout, "Token:  %s\n", result.Token)
+			_, _ = fmt.Fprintf(os.Stdout, "Fingerprint: sha256:%s\n", result.Fingerprint)
+			_, _ = fmt.Fprintln(os.Stdout, "")
+			_, _ = fmt.Fprintln(os.Stdout, "Add this server to your local machine:")
+			_, _ = fmt.Fprintf(os.Stdout, "  reach add <name> --host %s --token %s\n", thisIP, result.Token)
 			return nil
 		},
 	}
@@ -67,7 +67,7 @@ func detectOutboundIP() string {
 	if err != nil {
 		return "<this-ip>"
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	addr, ok := conn.LocalAddr().(*net.UDPAddr)
 	if !ok {
 		return "<this-ip>"

@@ -49,7 +49,7 @@ func LoadConfig(path string) (*AgentConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open config: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var cfg AgentConfig
 	if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
@@ -134,11 +134,11 @@ func handleHealth(cfg *AgentConfig, w http.ResponseWriter, r *http.Request) {
 
 func jsonResponse(w http.ResponseWriter, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(v)
+	_ = json.NewEncoder(w).Encode(v)
 }
 
 func jsonError(w http.ResponseWriter, msg string, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }

@@ -39,7 +39,7 @@ func readCmd() *cobra.Command {
 			if !ok {
 				return fmt.Errorf("unexpected response format")
 			}
-			fmt.Fprint(os.Stdout, content)
+			_, _ = fmt.Fprint(os.Stdout, content)
 			return nil
 		},
 	}
@@ -69,7 +69,7 @@ func writeCmd() *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(os.Stdout, "Written to %s\n", remotePath)
+			_, _ = fmt.Fprintf(os.Stdout, "Written to %s\n", remotePath)
 			return nil
 		},
 	}
@@ -96,7 +96,7 @@ func uploadCmd() *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(os.Stdout, "Uploaded %s → %s (%d bytes)\n", localPath, remotePath, n)
+			_, _ = fmt.Fprintf(os.Stdout, "Uploaded %s → %s (%d bytes)\n", localPath, remotePath, n)
 			return nil
 		},
 	}
@@ -122,7 +122,7 @@ func downloadCmd() *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(os.Stdout, "Downloaded %s → %s\n", remotePath, localPath)
+			_, _ = fmt.Fprintf(os.Stdout, "Downloaded %s → %s\n", remotePath, localPath)
 			return nil
 		},
 	}

@@ -36,12 +36,12 @@ func execCmd() *cobra.Command {
 
 			// 打印 stdout
 			if stdout, ok := result["stdout"].(string); ok && stdout != "" {
-				fmt.Fprint(os.Stdout, stdout)
+				_, _ = fmt.Fprint(os.Stdout, stdout)
 			}
 
 			// 打印 stderr
 			if stderr, ok := result["stderr"].(string); ok && stderr != "" {
-				fmt.Fprint(os.Stderr, stderr)
+				_, _ = fmt.Fprint(os.Stderr, stderr)
 			}
 
 			// 如果退出码非零，返回错误（但不打印额外信息，已经在上面打印了）

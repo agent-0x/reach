@@ -22,7 +22,7 @@ func ReadFile(path string, maxSize int) (*ReadResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	info, err := f.Stat()
 	if err != nil {
@@ -92,11 +92,11 @@ func WriteFile(path string, content string, mode string) error {
 	}()
 
 	if _, err := tmp.WriteString(content); err != nil {
-		tmp.Close()
+		_ = tmp.Close()
 		return fmt.Errorf("write temp file: %w", err)
 	}
 	if err := tmp.Sync(); err != nil {
-		tmp.Close()
+		_ = tmp.Close()
 		return fmt.Errorf("sync temp file: %w", err)
 	}
 	if err := tmp.Close(); err != nil {
@@ -116,7 +116,7 @@ func WriteFile(path string, content string, mode string) error {
 	// fsync 目录确保 rename 持久化
 	if d, err := os.Open(dir); err == nil {
 		_ = d.Sync()
-		d.Close()
+		_ = d.Close()
 	}
 
 	success = true

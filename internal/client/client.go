@@ -90,7 +90,7 @@ func (c *ReachClient) do(method, path string, body interface{}) (map[string]inte
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respData, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -142,7 +142,7 @@ func (c *ReachClient) Upload(localPath, remotePath string) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("open local file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var buf bytes.Buffer
 	mw := multipart.NewWriter(&buf)
@@ -159,7 +159,9 @@ func (c *ReachClient) Upload(localPath, remotePath string) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("copy file data: %w", err)
 	}
-	mw.Close()
+	if err := mw.Close(); err != nil {
+		return 0, fmt.Errorf("close multipart writer: %w", err)
+	}
 
 	req, err := http.NewRequest("POST", c.baseURL()+"/upload", &buf)
 	if err != nil {
@@ -172,7 +174,7 @@ func (c *ReachClient) Upload(localPath, remotePath string) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("upload request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respData, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -207,7 +209,7 @@ func (c *ReachClient) Download(remotePath, localPath string) error {
 	if err != nil {
 		return fmt.Errorf("download request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 400 {
 		data, _ := io.ReadAll(resp.Body)
@@ -229,7 +231,7 @@ func (c *ReachClient) Download(remotePath, localPath string) error {
 	if err != nil {
 		return fmt.Errorf("create local file: %w", err)
 	}
-	defer out.Close()
+	defer func() { _ = out.Close() }()
 
 	if _, err := io.Copy(out, resp.Body); err != nil {
 		return fmt.Errorf("write local file: %w", err)
@@ -266,7 +268,7 @@ func (c *ReachClient) GetFingerprint() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("TLS dial: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	certs := conn.ConnectionState().PeerCertificates
 	if len(certs) == 0 {

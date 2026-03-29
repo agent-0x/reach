@@ -188,7 +188,7 @@ func handleUpload(cfg *AgentConfig, w http.ResponseWriter, r *http.Request) {
 		jsonError(w, "read file field: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	data, err := io.ReadAll(file)
 	if err != nil {
@@ -225,7 +225,7 @@ func handleDownload(cfg *AgentConfig, w http.ResponseWriter, r *http.Request) {
 		jsonError(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	info, err := f.Stat()
 	if err != nil {
