@@ -200,6 +200,8 @@ port     = 7100
 
 ## 作为服务运行
 
+> **注意：** 如果 reach 安装在其他位置（如 `~/.local/bin/reach`），请调整 `ExecStart` 路径。
+
 ```ini
 # /etc/systemd/system/reach-agent.service
 [Unit]

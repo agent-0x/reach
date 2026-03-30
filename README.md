@@ -200,6 +200,8 @@ port     = 7100
 
 ## Running as a Service
 
+> **Note:** Adjust the `ExecStart` path if you installed reach to a different location (e.g., `~/.local/bin/reach`).
+
 ```ini
 # /etc/systemd/system/reach-agent.service
 [Unit]

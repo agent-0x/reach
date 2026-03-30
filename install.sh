@@ -8,10 +8,9 @@ VERSION="${1:-}"  # Optional: pass version as argument, e.g. ./install.sh 0.2.0
 # Determine install directory: prefer /usr/local/bin, fall back to ~/.local/bin
 if [ -w "/usr/local/bin" ]; then
   INSTALL_DIR="/usr/local/bin"
-elif [ -w "$HOME/.local/bin" ]; then
-  INSTALL_DIR="$HOME/.local/bin"
 else
-  INSTALL_DIR="/usr/local/bin"  # will use sudo later
+  INSTALL_DIR="$HOME/.local/bin"
+  mkdir -p "$INSTALL_DIR"
 fi
 
 # Detect OS and architecture
