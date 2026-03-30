@@ -38,16 +38,9 @@
 
 ### SSH vs Reach
 
-| | SSH | Reach |
-|---|---|---|
-| **连接** | 持久 TCP —— WiFi 切换、睡眠、NAT 超时就断 | 无状态 HTTP —— 每次调用独立，不存在断线 |
-| **输出** | 人类文本（`free -m` → 表格要正则解析） | 结构化 JSON（`.memory.usage_percent`） |
-| **安全预检** | 发出去就执行了，没有拦截层 | `dryrun` 预检 —— 执行前给出风险评分 |
-| **认证** | 密钥对 —— 生成、分发、轮换、吊销 | 一个 Token —— init 时生成，搞定 |
-| **Shell 转义** | 嵌套引号地狱（`ssh host "echo 'it'\''s'"`) | JSON body —— 无转义问题 |
-| **主机验证** | `known_hosts` —— IP 变了就报警，手动清理 | TOFU 指纹 —— 锁定一次，再也不管 |
-| **文件写入** | `echo > file` —— 失败时半写 | 原子写入 —— temp → fsync → rename，不会半写 |
-| **错误处理** | 只有 exit code | JSON 错误 + 原因 + 受影响路径 + 建议 |
+<p align="center">
+  <img src="assets/ssh-vs-reach.svg" width="760" alt="SSH vs Reach 对比：连接模型、输出格式、安全预检、认证、转义、文件写入、错误处理">
+</p>
 
 ## 安装
 
