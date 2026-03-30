@@ -12,6 +12,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// AgentVersion is the current reach-agent version.
+const AgentVersion = "0.2.0"
+
+// Capabilities lists the features this agent supports beyond v0.1.0 baseline.
+var Capabilities = []string{"stats", "dryrun"}
+
 // AgentConfig 对应 config.yaml
 type AgentConfig struct {
 	Port       int    `yaml:"port"`
@@ -125,8 +131,9 @@ func authMiddleware(cfg *AgentConfig, next func(*AgentConfig, http.ResponseWrite
 
 func handleHealth(cfg *AgentConfig, w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, map[string]interface{}{
-		"ok":      true,
-		"version": "0.1.0",
+		"ok":           true,
+		"version":      AgentVersion,
+		"capabilities": Capabilities,
 	})
 }
 

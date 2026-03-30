@@ -282,8 +282,18 @@ func TestHandleHealth(t *testing.T) {
 	if body["ok"] != true {
 		t.Fatalf("expected ok=true, got %v", body["ok"])
 	}
-	if body["version"] != "0.1.0" {
-		t.Fatalf("expected version 0.1.0, got %v", body["version"])
+	if body["version"] != "0.2.0" {
+		t.Fatalf("expected version 0.2.0, got %v", body["version"])
+	}
+	if body["capabilities"] == nil {
+		t.Fatalf("expected capabilities field in response")
+	}
+	caps, ok := body["capabilities"].([]interface{})
+	if !ok {
+		t.Fatalf("expected capabilities to be an array, got %T", body["capabilities"])
+	}
+	if len(caps) == 0 {
+		t.Fatalf("expected at least one capability")
 	}
 }
 
