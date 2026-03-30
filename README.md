@@ -106,6 +106,8 @@ AI:  [calls reach_bash("myserver", "systemctl status nginx")]
 | `reach_upload` | Upload a local file to the server |
 | `reach_info` | Get system info (CPU, memory, disk, uptime) |
 | `reach_list` | List all configured servers |
+| `reach_stats` | Get detailed system stats (CPU %, memory, disk, network, top processes) |
+| `reach_dryrun` | Check if a command is dangerous before executing (risk score 0-100) |
 
 ## CLI Reference
 
@@ -125,6 +127,8 @@ AI:  [calls reach_bash("myserver", "systemctl status nginx")]
 | `reach health <server>` | Check server health |
 | `reach mcp install [--global]` | Register as MCP server in Claude Code |
 | `reach mcp serve` | Start MCP stdio server (internal) |
+| `reach stats <server>` | Show detailed system stats |
+| `reach dryrun <server> <cmd>` | Check command risk before executing |
 
 ## Architecture
 

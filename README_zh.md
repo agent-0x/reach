@@ -106,6 +106,8 @@ AI：[调用 reach_bash("myserver", "systemctl status nginx")]
 | `reach_upload` | 上传本地文件到服务器 |
 | `reach_info` | 获取系统信息（CPU、内存、磁盘、运行时间） |
 | `reach_list` | 列出所有已配置的服务器 |
+| `reach_stats` | 获取详细系统状态（CPU%、内存、磁盘、网络、进程排行） |
+| `reach_dryrun` | 执行前检查命令危险性（风险评分 0-100） |
 
 ## CLI 参考
 
@@ -125,6 +127,8 @@ AI：[调用 reach_bash("myserver", "systemctl status nginx")]
 | `reach health <server>` | 健康检查 |
 | `reach mcp install [--global]` | 注册为 Claude Code MCP 服务器 |
 | `reach mcp serve` | 启动 MCP stdio 服务器（内部使用） |
+| `reach stats <server>` | 查看详细系统状态 |
+| `reach dryrun <server> <cmd>` | 执行前检查命令风险 |
 
 ## 架构
 
