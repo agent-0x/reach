@@ -36,6 +36,19 @@
 
 Existing tools either target humans (SSH, Tailscale, Teleport) or wrap SSH for AI (losing simplicity). Reach is **purpose-built for AI agents**: one binary, one token, native MCP — no SSH layer in between.
 
+### SSH vs Reach
+
+| | SSH | Reach |
+|---|---|---|
+| **Connection** | Persistent TCP — drops on WiFi change, sleep, NAT timeout | Stateless HTTP — each call is independent, no disconnects |
+| **Output** | Human text (`free -m` → table to regex-parse) | Structured JSON (`.memory.usage_percent`) |
+| **Safety** | Fire and forget — command sent = command executed | Pre-check with `dryrun` — risk score before execution |
+| **Auth** | Key pairs — generate, distribute, rotate, revoke | One token — generated at init, done |
+| **Shell escaping** | Nested quoting hell (`ssh host "echo 'it'\''s'"`) | JSON body — no escaping issues |
+| **Host verification** | `known_hosts` — breaks on IP change, manual cleanup | TOFU fingerprint — pin once, never think about it |
+| **File writes** | `echo > file` — partial writes on failure | Atomic — temp → fsync → rename, never half-written |
+| **Error handling** | Exit code only | JSON error with reason, affected path, suggestion |
+
 ## Install
 
 ```bash
