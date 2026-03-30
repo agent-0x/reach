@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480" font-family="'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace">
+  <defs>
+    <linearGradient id="blue-ocean" x1="0" y1="0" x2="0.4" y2="0.4">
+      <stop offset="0%" stop-color="#00ADD8" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#00ADD8" stop-opacity="0.03"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="720" height="480" rx="12" fill="#0D1117"/>
+
+  <!-- Blue ocean highlight (top-left quadrant) -->
+  <rect x="60" y="40" width="290" height="190" rx="8" fill="url(#blue-ocean)" stroke="#00ADD8" stroke-width="1" stroke-dasharray="6 4" opacity="0.7"/>
+  <text x="175" y="68" text-anchor="middle" font-size="11" fill="#00ADD8" opacity="0.8" font-weight="600">BLUE OCEAN</text>
+
+  <!-- Axes -->
+  <!-- Y axis -->
+  <line x1="60" y1="40" x2="60" y2="420" stroke="#30363D" stroke-width="2"/>
+  <polygon points="60,36 55,48 65,48" fill="#30363D"/>
+  <!-- X axis -->
+  <line x1="56" y1="235" x2="680" y2="235" stroke="#30363D" stroke-width="2"/>
+  <polygon points="684,235 672,230 672,240" fill="#30363D"/>
+
+  <!-- Y axis labels -->
+  <text x="40" y="62" text-anchor="end" font-size="11" fill="#8B949E">AI Agent</text>
+  <text x="40" y="76" text-anchor="end" font-size="11" fill="#8B949E">Native</text>
+  <text x="40" y="405" text-anchor="end" font-size="11" fill="#8B949E">For</text>
+  <text x="40" y="419" text-anchor="end" font-size="11" fill="#8B949E">Humans</text>
+
+  <!-- X axis labels -->
+  <text x="90" y="260" font-size="11" fill="#8B949E">Lightweight</text>
+  <text x="90" y="274" font-size="11" fill="#8B949E">Self-hosted</text>
+  <text x="608" y="260" font-size="11" fill="#8B949E">Heavy</text>
+  <text x="608" y="274" font-size="11" fill="#8B949E">Managed</text>
+
+  <!-- ★ Reach — top-left, the star -->
+  <circle cx="180" cy="120" r="28" fill="#00ADD8" opacity="0.15" filter="url(#glow)"/>
+  <circle cx="180" cy="120" r="18" fill="#00ADD8" opacity="0.3"/>
+  <circle cx="180" cy="120" r="10" fill="#00ADD8"/>
+  <text x="180" y="124" text-anchor="middle" font-size="10" fill="#0D1117" font-weight="700">★</text>
+  <text x="216" y="112" font-size="14" fill="#FFFFFF" font-weight="700">Reach</text>
+  <text x="216" y="130" font-size="11" fill="#8B949E">HTTP agent + MCP</text>
+  <text x="216" y="145" font-size="11" fill="#8B949E">Single binary, 30s setup</text>
+
+  <!-- MCP-SSH bridges — top-right area -->
+  <circle cx="500" cy="130" r="6" fill="#8B949E" opacity="0.5"/>
+  <text x="514" y="125" font-size="12" fill="#8B949E">MCP-SSH bridges</text>
+  <text x="514" y="141" font-size="10" fill="#6E7681">Wrap SSH for AI, still</text>
+  <text x="514" y="155" font-size="10" fill="#6E7681">need key management</text>
+
+  <!-- E2B — right-middle -->
+  <circle cx="560" cy="200" r="6" fill="#8B949E" opacity="0.5"/>
+  <text x="574" y="195" font-size="12" fill="#8B949E">E2B</text>
+  <text x="574" y="211" font-size="10" fill="#6E7681">Sandboxed cloud VMs</text>
+
+  <!-- Tailscale — bottom-left -->
+  <circle cx="180" cy="360" r="6" fill="#8B949E" opacity="0.5"/>
+  <text x="194" y="355" font-size="12" fill="#8B949E">Tailscale</text>
+  <text x="194" y="371" font-size="10" fill="#6E7681">VPN mesh, human-first</text>
+
+  <!-- Teleport — bottom-right -->
+  <circle cx="520" cy="340" r="6" fill="#8B949E" opacity="0.5"/>
+  <text x="534" y="335" font-size="12" fill="#8B949E">Teleport</text>
+  <text x="534" y="351" font-size="10" fill="#6E7681">Enterprise access plane</text>
+
+  <!-- SSH — bottom-center -->
+  <circle cx="320" cy="390" r="6" fill="#8B949E" opacity="0.5"/>
+  <text x="334" y="385" font-size="12" fill="#8B949E">SSH</text>
+  <text x="334" y="401" font-size="10" fill="#6E7681">The incumbent, 30 yrs old</text>
+
+  <!-- Ansible — bottom-center-right -->
+  <circle cx="440" cy="380" r="6" fill="#8B949E" opacity="0.5"/>
+  <text x="454" y="375" font-size="12" fill="#8B949E">Ansible</text>
+  <text x="454" y="391" font-size="10" fill="#6E7681">Config mgmt over SSH</text>
+
+  <!-- Divider lines (subtle) -->
+  <line x1="350" y1="44" x2="350" y2="420" stroke="#21262D" stroke-width="1" stroke-dasharray="4 6"/>
+  <line x1="64" y1="235" x2="676" y2="235" stroke="#21262D" stroke-width="0" stroke-dasharray="4 6"/>
+</svg>

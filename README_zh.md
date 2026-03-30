@@ -28,6 +28,14 @@
 - **AI 原生** —— 内置 [MCP](https://modelcontextprotocol.io) 服务器，支持 Claude Code、Cursor、Windsurf 或任何兼容 MCP 的 AI
 - **默认安全** —— TLS + Token 认证 + TOFU 指纹锁定 + 命令黑名单 + fail2ban 集成，无需管理 SSH 密钥
 
+### 竞品定位
+
+<p align="center">
+  <img src="assets/positioning.svg" width="680" alt="Reach 定位：AI 原生、轻量、自托管 —— 无直接竞品的蓝海">
+</p>
+
+现有工具要么面向人类（SSH、Tailscale、Teleport），要么只是给 AI 包了一层 SSH（失去简洁性）。Reach **专为 AI Agent 而生**：一个二进制、一个 Token、原生 MCP —— 中间没有 SSH 层。
+
 ## 安装
 
 ```bash

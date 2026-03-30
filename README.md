@@ -28,6 +28,14 @@
 - **AI-native** — built-in [MCP](https://modelcontextprotocol.io) server works with Claude Code, Cursor, Windsurf, or any MCP-compatible AI
 - **Secure by default** — TLS + token auth + TOFU pinning + command blacklist + fail2ban integration. No SSH keys to rotate.
 
+### How Reach Compares
+
+<p align="center">
+  <img src="assets/positioning.svg" width="680" alt="Reach positioning: AI-native, lightweight, self-hosted — a blue ocean with no direct competitors">
+</p>
+
+Existing tools either target humans (SSH, Tailscale, Teleport) or wrap SSH for AI (losing simplicity). Reach is **purpose-built for AI agents**: one binary, one token, native MCP — no SSH layer in between.
+
 ## Install
 
 ```bash
