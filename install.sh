@@ -2,8 +2,17 @@
 set -euo pipefail
 
 REPO="agent-0x/reach"
-INSTALL_DIR="/usr/local/bin"
 BINARY="reach"
+VERSION="${1:-}"  # Optional: pass version as argument, e.g. ./install.sh 0.2.0
+
+# Determine install directory: prefer /usr/local/bin, fall back to ~/.local/bin
+if [ -w "/usr/local/bin" ]; then
+  INSTALL_DIR="/usr/local/bin"
+elif [ -w "$HOME/.local/bin" ]; then
+  INSTALL_DIR="$HOME/.local/bin"
+else
+  INSTALL_DIR="/usr/local/bin"  # will use sudo later
+fi
 
 # Detect OS and architecture
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -22,13 +31,17 @@ case "$OS" in
   *)      echo "Unsupported OS: $OS"; exit 1 ;;
 esac
 
-# Get latest release tag
-echo "Fetching latest release..."
-TAG=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
-
-if [ -z "$TAG" ]; then
-  echo "Error: could not determine latest release"
-  exit 1
+# Get release version
+if [ -n "$VERSION" ]; then
+  TAG="$VERSION"
+  echo "Installing reach v${TAG}..."
+else
+  echo "Fetching latest release..."
+  TAG=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
+  if [ -z "$TAG" ]; then
+    echo "Error: could not determine latest release"
+    exit 1
+  fi
 fi
 
 # Download and extract
@@ -64,12 +77,18 @@ tar xzf "${TMP}/reach.tar.gz" -C "$TMP"
 # Install
 if [ -w "$INSTALL_DIR" ]; then
   mv "${TMP}/${BINARY}" "${INSTALL_DIR}/${BINARY}"
+  chmod +x "${INSTALL_DIR}/${BINARY}"
 else
   echo "Installing to ${INSTALL_DIR} (requires sudo)..."
-  sudo mv "${TMP}/${BINARY}" "${INSTALL_DIR}/${BINARY}"
+  sudo install -m 755 "${TMP}/${BINARY}" "${INSTALL_DIR}/${BINARY}"
 fi
 
-chmod +x "${INSTALL_DIR}/${BINARY}"
+# Warn if install dir is not in PATH
+case ":$PATH:" in
+  *":${INSTALL_DIR}:"*) ;;
+  *) echo "Warning: ${INSTALL_DIR} is not in your PATH. Add it with:"
+     echo "  export PATH=\"${INSTALL_DIR}:\$PATH\"" ;;
+esac
 
 echo ""
 echo "reach v${TAG} installed to ${INSTALL_DIR}/${BINARY}"
