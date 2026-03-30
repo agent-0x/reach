@@ -42,6 +42,17 @@ Existing tools either target humans (SSH, Tailscale, Teleport) or wrap SSH for A
   <img src="assets/ssh-vs-reach.svg" width="760" alt="SSH vs Reach comparison: connection model, output format, safety, auth, escaping, file writes, error handling">
 </p>
 
+### What Reach Can Do That SSH Can't
+
+| Capability | What it does | Why SSH can't |
+|------------|-------------|---------------|
+| **Command dry-run** | `reach_dryrun("rm -rf /opt/old")` → risk score 85/100, 847 files affected | SSH has no intercept layer — command sent = command executed |
+| **Structured monitoring** | `reach_stats` → JSON with CPU %, memory %, top processes | SSH returns `top` / `free -m` text — AI must regex-parse |
+| **Atomic file writes** | `reach_write` → temp file → fsync → rename | `echo > file` can leave partial content on failure |
+| **Command blacklist** | Blocks `rm -rf /`, `mkfs`, fork bombs server-side | SSH executes anything the user has permission for |
+| **One-command deploy** | `reach bootstrap myserver --host IP --user root` | SSH setup = generate keys, copy keys, configure sshd, test |
+| **AI skill built-in** | MCP server with [instructions](AGENTS.md) — AI knows which tool to use | SSH has no concept of teaching AI how to use it |
+
 ## Install
 
 **Add the skill to your AI — one line:**

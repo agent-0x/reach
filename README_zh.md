@@ -42,6 +42,17 @@
   <img src="assets/ssh-vs-reach.svg" width="760" alt="SSH vs Reach 对比：连接模型、输出格式、安全预检、认证、转义、文件写入、错误处理">
 </p>
 
+### SSH 做不到，Reach 能做的
+
+| 能力 | 做什么 | SSH 为什么不行 |
+|------|--------|---------------|
+| **命令预检** | `reach_dryrun("rm -rf /opt/old")` → 风险评分 85/100，影响 847 个文件 | SSH 没有拦截层 —— 发出去就执行了 |
+| **结构化监控** | `reach_stats` → CPU%、内存%、进程排行，全是 JSON | SSH 返回 `top` / `free -m` 文本，AI 要正则解析 |
+| **原子文件写入** | `reach_write` → 临时文件 → fsync → 重命名 | `echo > file` 失败时文件半写 |
+| **命令黑名单** | 服务端阻止 `rm -rf /`、`mkfs`、fork bomb | SSH 只要有权限就能执行任何命令 |
+| **一键部署** | `reach bootstrap myserver --host IP --user root` | SSH 部署 = 生成密钥、复制密钥、配置 sshd、测试 |
+| **AI Skill 内置** | MCP server 带 [instructions](AGENTS.md) —— AI 自动知道用哪个工具 | SSH 没有"教 AI 怎么用"的概念 |
+
 ## 安装
 
 **给你的 AI 加上 skill —— 一行搞定：**
