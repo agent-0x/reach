@@ -10,9 +10,44 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
+const instructions = `You have access to remote servers via Reach — an AI-native alternative to SSH.
+
+## Golden Rules
+
+1. **reach_dryrun BEFORE destructive commands.** Always call reach_dryrun before reach_bash when the command modifies state (rm, mv, systemctl restart, apt install, kill, etc.). If risk is "high" or "blocked", warn the user and suggest alternatives.
+
+2. **reach_stats instead of shell parsing.** Never run "top", "free -m", "df -h" via reach_bash and parse text. Use reach_stats — it returns structured JSON with CPU %, memory, disk, network, top processes. AI-native, not human-native.
+
+3. **reach_read/reach_write instead of cat/echo.** For file operations, prefer reach_read and reach_write (atomic writes, no shell escaping issues) over reach_bash with cat/echo/sed.
+
+4. **reach_list to discover servers.** If you're unsure which servers are available, call reach_list first.
+
+5. **One server at a time.** Each tool call targets one server by name. If you need to run the same command on multiple servers, call reach_bash for each.
+
+## Tool Selection Guide
+
+| Need | Tool | NOT this |
+|------|------|----------|
+| System stats (CPU, memory, disk) | reach_stats | reach_bash + "top" / "free" |
+| Check if command is safe | reach_dryrun | Just running it and hoping |
+| Read a file | reach_read | reach_bash + "cat" |
+| Write a file | reach_write | reach_bash + "echo > " |
+| Upload a file | reach_upload | reach_bash + "base64 decode" |
+| Run a command | reach_bash | — |
+| System info (hostname, OS) | reach_info | reach_bash + "uname" |
+
+## Behavioral Notes
+
+- reach_write is atomic (temp file → fsync → rename). It never leaves partial writes.
+- reach_bash commands run in isolated process groups with timeouts. Stuck commands are killed.
+- All connections are HTTPS with certificate pinning. No plaintext.
+- The server has a command blacklist (rm -rf /, mkfs, dd to disk, fork bombs). Blocked commands return an error, not a silent failure.`
+
 // Serve 启动 MCP stdio server，阻塞直到 stdin 关闭。
 func Serve() error {
-	s := server.NewMCPServer("reach", "0.1.0")
+	s := server.NewMCPServer("reach", "0.2.0",
+		server.WithInstructions(instructions),
+	)
 
 	s.AddTool(toolReachBash(), handleReachBash)
 	s.AddTool(toolReachRead(), handleReachRead)
