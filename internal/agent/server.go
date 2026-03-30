@@ -85,6 +85,7 @@ func Serve(cfg *AgentConfig) error {
 		{"/upload", handleUpload},
 		{"/download", handleDownload},
 		{"/stats", handleStats},
+		{"/dryrun", handleDryRun},
 	} {
 		route := route // capture
 		mux.HandleFunc(route.path, authMiddleware(cfg, route.handler))
