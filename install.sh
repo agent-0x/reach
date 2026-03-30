@@ -39,6 +39,26 @@ TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
 curl -fsSL "$URL" -o "${TMP}/reach.tar.gz"
+
+# Verify checksum
+CHECKSUM_URL="https://github.com/${REPO}/releases/download/v${TAG}/checksums.txt"
+echo "Verifying checksum..."
+curl -fsSL "$CHECKSUM_URL" -o "${TMP}/checksums.txt"
+EXPECTED=$(grep "${BINARY}_${TAG}_${OS}_${ARCH}.tar.gz" "${TMP}/checksums.txt" | awk '{print $1}')
+if [ -z "$EXPECTED" ]; then
+  echo "Warning: could not find checksum for this archive, skipping verification"
+else
+  ACTUAL=$(sha256sum "${TMP}/reach.tar.gz" 2>/dev/null || shasum -a 256 "${TMP}/reach.tar.gz" 2>/dev/null)
+  ACTUAL=$(echo "$ACTUAL" | awk '{print $1}')
+  if [ "$EXPECTED" != "$ACTUAL" ]; then
+    echo "Error: checksum mismatch!"
+    echo "  Expected: $EXPECTED"
+    echo "  Got:      $ACTUAL"
+    exit 1
+  fi
+  echo "Checksum OK."
+fi
+
 tar xzf "${TMP}/reach.tar.gz" -C "$TMP"
 
 # Install
