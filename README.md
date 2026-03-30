@@ -1,67 +1,103 @@
-# Reach
+<p align="center">
+  <img src="assets/logo.svg" width="200" alt="Reach Logo">
+</p>
 
-Control any server from any AI. A lightweight agent for remote server management.
+<h1 align="center">Reach</h1>
 
-- **One binary, one token** — install in 30 seconds
-- **Works with Claude Code, GPT, Gemini, or any AI** via MCP
-- **HTTPS + Token auth**, no SSH dependency
+<p align="center">
+  <strong>Control any server from any AI.</strong><br>
+  A lightweight agent for remote server management — no SSH required.
+</p>
+
+<p align="center">
+  <a href="https://github.com/agent-0x/reach/actions/workflows/ci.yml"><img src="https://github.com/agent-0x/reach/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/agent-0x/reach/releases"><img src="https://img.shields.io/github/v/release/agent-0x/reach" alt="Release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+  <a href="https://pkg.go.dev/github.com/agent-0x/reach"><img src="https://pkg.go.dev/badge/github.com/agent-0x/reach.svg" alt="Go Reference"></a>
+</p>
+
+<p align="center">
+  <strong>English</strong> | <a href="README_zh.md">中文</a>
+</p>
 
 ---
 
+## Why Reach?
+
+- **One binary, one token** — install on a server in 30 seconds, zero config files to manage
+- **AI-native** — built-in [MCP](https://modelcontextprotocol.io) server works with Claude Code, Cursor, Windsurf, or any MCP-compatible AI
+- **Secure by default** — TLS + token auth + TOFU pinning + command blacklist + fail2ban integration. No SSH keys to rotate.
+
+## Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/agent-0x/reach/master/install.sh | bash
+```
+
+Or download from [Releases](https://github.com/agent-0x/reach/releases), or build from source:
+
+```bash
+git clone https://github.com/agent-0x/reach.git
+cd reach && make build
+# Binary at ./bin/reach
+```
+
 ## Quick Start
 
-**Server side** (on your remote machine):
+### 1. Set up the agent (on your server)
 
 ```bash
 reach agent init --dir /etc/reach-agent
 reach agent serve --config /etc/reach-agent/config.yaml
-# Copy the token shown during init
+# Copy the token displayed during init
 ```
 
-**Client side** (on your local machine):
+> **Tip:** See [Running as a Service](#running-as-a-service) to run the agent in the background.
+
+### 2. Add the server (on your local machine)
 
 ```bash
-reach add myserver --host <server-ip> --token <token>
+reach add myserver --host 203.0.113.10 --token <token>
+# Fingerprint is automatically pinned on first connect (TOFU)
+```
+
+### 3. Use it
+
+```bash
 reach exec myserver "uname -a"
 reach read myserver /etc/hostname
+reach upload myserver ./deploy.sh /opt/deploy.sh
 ```
 
----
+## AI Integration (MCP)
 
-## Claude Code Integration
+Reach ships a built-in MCP server so any MCP-compatible AI can manage your servers directly.
+
+### Claude Code
 
 ```bash
-reach mcp install
-# Restart Claude Code — reach tools are now available
+reach mcp install          # project-level
+reach mcp install --global # all projects
+# Restart Claude Code — tools are now available
 ```
 
 Then just ask:
 
 ```
-You: "Check the nginx status on myserver"
-AI: [calls reach_bash("myserver", "systemctl status nginx")]
+You: "Check nginx status on myserver"
+AI:  [calls reach_bash("myserver", "systemctl status nginx")]
 ```
 
-Use `--global` to install for all projects:
-
-```bash
-reach mcp install --global
-```
-
----
-
-## MCP Tools
+### MCP Tools
 
 | Tool | Description |
 |------|-------------|
 | `reach_bash` | Execute a shell command |
 | `reach_read` | Read a remote file |
-| `reach_write` | Write a file (atomic: temp + fsync + rename) |
+| `reach_write` | Write a file (atomic: temp → fsync → rename) |
 | `reach_upload` | Upload a local file to the server |
 | `reach_info` | Get system info (CPU, memory, disk, uptime) |
 | `reach_list` | List all configured servers |
-
----
 
 ## CLI Reference
 
@@ -70,7 +106,7 @@ reach mcp install --global
 | `reach agent init [--dir]` | Generate TLS cert + token, write config |
 | `reach agent serve [--config]` | Start the HTTPS agent server |
 | `reach add <name> --host --token [--port]` | Add a server (TOFU fingerprint pinning) |
-| `reach remove <name>` | Remove a server from local config |
+| `reach remove <name>` | Remove a server |
 | `reach list` | List all configured servers |
 | `reach exec <server> <cmd> [-t timeout]` | Run a command remotely |
 | `reach read <server> <path>` | Read a remote file |
@@ -79,39 +115,60 @@ reach mcp install --global
 | `reach download <server> <remote> <local>` | Download a remote file |
 | `reach info <server>` | Show system information |
 | `reach health <server>` | Check server health |
-| `reach mcp install [--global]` | Register reach as an MCP server in Claude Code |
-| `reach mcp serve` | Start the MCP stdio server (used internally by Claude Code) |
+| `reach mcp install [--global]` | Register as MCP server in Claude Code |
+| `reach mcp serve` | Start MCP stdio server (internal) |
 
----
+## Architecture
 
-## Security Model
+```
+┌─────────────────────────────────┐
+│  Your Machine                   │
+│                                 │
+│  Claude Code / Cursor / Gemini  │
+│         │ MCP (stdio)           │
+│         ▼                       │
+│  ┌─────────────┐               │
+│  │ reach mcp   │               │
+│  │   serve     │               │
+│  └──────┬──────┘               │
+│         │ HTTPS + Bearer Token  │
+└─────────┼───────────────────────┘
+          │
+          ▼
+┌─────────────────────────────────┐
+│  Remote Server                  │
+│                                 │
+│  ┌─────────────┐               │
+│  │ reach agent │               │
+│  │   serve     │               │
+│  └─────────────┘               │
+│   :7100 (TLS)                  │
+└─────────────────────────────────┘
+```
 
-- **Self-signed TLS with TOFU** — certificate fingerprint is fetched once on `reach add` and pinned locally; subsequent connections verify against it
-- **128-bit random Bearer Token** — generated at `agent init`, never transmitted in plaintext
-- **Process group isolation** — each command runs in its own process group; cleanup is guaranteed on timeout
-- **Atomic file writes** — write to a temp file, `fsync`, then rename; no partial writes
-- **Command blacklist** — blocks dangerous commands (`rm -rf /`, `mkfs`, `dd` to disk, fork bomb, etc.)
-- **AUTH_FAIL logging** — failed auth attempts are logged with source IP for fail2ban integration
+## Security
 
-### Security Configuration
+- **Self-signed TLS + TOFU** — certificate fingerprint pinned on first `reach add`; verified on every subsequent connection
+- **128-bit Bearer Token** — generated at `agent init`, transmitted only over TLS
+- **Process isolation** — each command runs in its own process group with timeout enforcement
+- **Atomic file writes** — temp file → `fsync` → rename; no partial writes
+- **Command blacklist** — blocks dangerous commands (`rm -rf /`, `mkfs`, `dd`, fork bombs, etc.)
+- **fail2ban ready** — `AUTH_FAIL from <IP>` logged to systemd journal on failed auth
 
-All security features are enabled by default. Configure in `/etc/reach-agent/config.yaml`:
+### Configuration
+
+All security features are enabled by default. Customize in your agent's `config.yaml`:
 
 ```yaml
 security:
-  # Command blacklist (default: true)
   command_blacklist: true
-  # Add your own blocked patterns (regex, appended to built-in list)
   custom_blacklist:
     - "\\bshutdown\\b"
     - "\\breboot\\b"
-  # AUTH_FAIL log for fail2ban (default: true)
   auth_fail_log: true
 ```
 
 ### fail2ban Integration
-
-Reach logs `AUTH_FAIL from <IP>` to systemd journal on every failed auth attempt. To auto-ban after 3 failures:
 
 ```ini
 # /etc/fail2ban/filter.d/reach-agent.conf
@@ -123,18 +180,42 @@ journalmatch = _SYSTEMD_UNIT=reach-agent.service
 ```ini
 # /etc/fail2ban/jail.d/reach-agent.conf
 [reach-agent]
-enabled = true
-backend = systemd
-filter = reach-agent
+enabled  = true
+backend  = systemd
+filter   = reach-agent
 maxretry = 3
 findtime = 600
-bantime = 3600
+bantime  = 3600
 banaction = ufw
-port = 7100
+port     = 7100
 ```
 
----
+## Running as a Service
+
+```ini
+# /etc/systemd/system/reach-agent.service
+[Unit]
+Description=Reach Agent
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/reach agent serve --config /etc/reach-agent/config.yaml
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now reach-agent
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-MIT
+[MIT](LICENSE)
