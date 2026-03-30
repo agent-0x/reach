@@ -20,6 +20,8 @@ func Serve() error {
 	s.AddTool(toolReachInfo(), handleReachInfo)
 	s.AddTool(toolReachList(), handleReachList)
 	s.AddTool(toolReachUpload(), handleReachUpload)
+	s.AddTool(toolReachStats(), handleReachStats)
+	s.AddTool(toolReachDryRun(), handleReachDryRun)
 
 	return server.ServeStdio(s)
 }
@@ -105,6 +107,33 @@ func toolReachUpload() mcp.Tool {
 		mcp.WithString("remote_path",
 			mcp.Required(),
 			mcp.Description("Absolute remote path where the file should be placed"),
+		),
+	)
+}
+
+func toolReachStats() mcp.Tool {
+	return mcp.NewTool("reach_stats",
+		mcp.WithDescription("Get detailed system stats from a remote server: CPU usage %, memory, disk, network IO, top processes. Returns structured JSON — no shell parsing needed."),
+		mcp.WithString("server",
+			mcp.Required(),
+			mcp.Description("Name of the remote server"),
+		),
+		mcp.WithNumber("top_n",
+			mcp.Description("Number of top processes to return (default 5, max 20)"),
+		),
+	)
+}
+
+func toolReachDryRun() mcp.Tool {
+	return mcp.NewTool("reach_dryrun",
+		mcp.WithDescription("Check if a command is dangerous before executing it. Returns risk level (low/medium/high/blocked), score 0-100, and reasons. Use this before reach_bash for destructive commands."),
+		mcp.WithString("server",
+			mcp.Required(),
+			mcp.Description("Name of the remote server"),
+		),
+		mcp.WithString("command",
+			mcp.Required(),
+			mcp.Description("Shell command to analyze (not executed)"),
 		),
 	)
 }
@@ -276,4 +305,38 @@ func handleReachUpload(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToo
 	}
 
 	return mcp.NewToolResultText(fmt.Sprintf("uploaded %d bytes", written)), nil
+}
+
+func handleReachStats(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	args := req.GetArguments()
+	c, err := getClientFromArgs(args)
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+	topN := 5
+	if t, ok := args["top_n"].(float64); ok && t > 0 {
+		topN = int(t)
+	}
+	result, err := c.Stats(topN)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("stats failed: %v", err)), nil
+	}
+	return mcp.NewToolResultText(toJSON(result)), nil
+}
+
+func handleReachDryRun(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	args := req.GetArguments()
+	c, err := getClientFromArgs(args)
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+	command, _ := args["command"].(string)
+	if command == "" {
+		return mcp.NewToolResultError("parameter 'command' is required"), nil
+	}
+	result, err := c.DryRun(command)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("dryrun failed: %v", err)), nil
+	}
+	return mcp.NewToolResultText(toJSON(result)), nil
 }

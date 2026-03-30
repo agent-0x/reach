@@ -1,8 +1,10 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/agent-0x/reach/internal/client"
 	"github.com/spf13/cobra"
@@ -14,6 +16,8 @@ func init() {
 	rootCmd.AddCommand(listCmd())
 	rootCmd.AddCommand(infoCmd())
 	rootCmd.AddCommand(healthCmd())
+	rootCmd.AddCommand(statsCmd())
+	rootCmd.AddCommand(dryrunCmd())
 }
 
 // getClient 从本地配置加载指定名称的服务器客户端
@@ -199,6 +203,66 @@ func healthCmd() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+// statsCmd — reach stats <server> [--top-n N]
+func statsCmd() *cobra.Command {
+	var topN int
+
+	cmd := &cobra.Command{
+		Use:   "stats <server>",
+		Short: "Show detailed system stats for a server (CPU, memory, disk, network, top processes)",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := getClient(args[0])
+			if err != nil {
+				return err
+			}
+			result, err := c.Stats(topN)
+			if err != nil {
+				return err
+			}
+			printJSON(result)
+			return nil
+		},
+	}
+
+	cmd.Flags().IntVar(&topN, "top-n", 5, "number of top processes to show")
+	return cmd
+}
+
+// dryrunCmd — reach dryrun <server> <command...>
+func dryrunCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "dryrun <server> <command...>",
+		Short: "Check if a command is dangerous before executing it",
+		Args:  cobra.MinimumNArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			serverName := args[0]
+			command := strings.Join(args[1:], " ")
+
+			c, err := getClient(serverName)
+			if err != nil {
+				return err
+			}
+			result, err := c.DryRun(command)
+			if err != nil {
+				return err
+			}
+			printJSON(result)
+			return nil
+		},
+	}
+}
+
+// printJSON 将 map 序列化为缩进 JSON 并打印到 stdout
+func printJSON(m map[string]interface{}) {
+	b, err := json.MarshalIndent(m, "", "  ")
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stdout, "%v\n", m)
+		return
+	}
+	_, _ = fmt.Fprintf(os.Stdout, "%s\n", b)
 }
 
 // printMap 格式化打印 map 内容（key: value）

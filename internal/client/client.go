@@ -254,6 +254,22 @@ func (c *ReachClient) Health() (bool, error) {
 	return ok, nil
 }
 
+// Stats returns enhanced system monitoring data, POST /stats
+func (c *ReachClient) Stats(topN int) (map[string]interface{}, error) {
+	body := map[string]interface{}{}
+	if topN > 0 {
+		body["top_n"] = topN
+	}
+	return c.do("POST", "/stats", body)
+}
+
+// DryRun checks a command's risk without executing it, POST /dryrun
+func (c *ReachClient) DryRun(command string) (map[string]interface{}, error) {
+	return c.do("POST", "/dryrun", map[string]interface{}{
+		"command": command,
+	})
+}
+
 // GetFingerprint 建立 TLS 连接获取服务器证书的 sha256 指纹（用于 TOFU）
 func (c *ReachClient) GetFingerprint() (string, error) {
 	port := c.Config.Port
