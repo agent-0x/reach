@@ -44,6 +44,16 @@
 
 ## 安装
 
+**把这个链接扔给你的 AI，它会自己搞定一切：**
+
+```
+https://github.com/agent-0x/reach/blob/master/AGENTS.md
+```
+
+> 把上面的链接粘贴到 Claude Code、Cursor 或任何 AI 助手中，它会自动学会安装和使用 Reach。
+
+**或手动安装：**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/agent-0x/reach/master/install.sh | bash
 ```

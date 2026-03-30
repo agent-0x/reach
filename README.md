@@ -44,6 +44,16 @@ Existing tools either target humans (SSH, Tailscale, Teleport) or wrap SSH for A
 
 ## Install
 
+**Give this to your AI and it handles everything:**
+
+```
+https://github.com/agent-0x/reach/blob/master/AGENTS.md
+```
+
+> Paste the link above into Claude Code, Cursor, or any AI assistant. It will learn how to install and use Reach automatically.
+
+**Or install manually:**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/agent-0x/reach/master/install.sh | bash
 ```
