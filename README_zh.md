@@ -44,15 +44,19 @@
 
 ## 安装
 
-**把这个链接扔给你的 AI，它会自己搞定一切：**
+**给你的 AI 加上 skill —— 一行搞定：**
 
+```bash
+# Claude Code
+claude mcp add-json reach '{"command":"reach","args":["mcp","serve"]}'
+
+# 或任何 AI：把这个 skill 文档发给它 ↓
+# https://raw.githubusercontent.com/agent-0x/reach/master/skill.md
 ```
-https://github.com/agent-0x/reach/blob/master/AGENTS.md
-```
 
-> 把上面的链接粘贴到 Claude Code、Cursor 或任何 AI 助手中，它会自动学会安装和使用 Reach。
+> 把 [skill.md](skill.md) 链接发给你的 AI。它会学会什么时候用哪个工具 —— 破坏性命令前先 dryrun、用结构化 stats 而非 shell 解析、原子写入文件。
 
-**或手动安装：**
+**安装二进制：**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/agent-0x/reach/master/install.sh | bash

@@ -44,15 +44,19 @@ Existing tools either target humans (SSH, Tailscale, Teleport) or wrap SSH for A
 
 ## Install
 
-**Give this to your AI and it handles everything:**
+**Add the skill to your AI — one line:**
 
+```bash
+# Claude Code
+claude mcp add-json reach '{"command":"reach","args":["mcp","serve"]}'
+
+# Or any AI: paste this skill doc ↓
+# https://raw.githubusercontent.com/agent-0x/reach/master/skill.md
 ```
-https://github.com/agent-0x/reach/blob/master/AGENTS.md
-```
 
-> Paste the link above into Claude Code, Cursor, or any AI assistant. It will learn how to install and use Reach automatically.
+> Give your AI the [skill.md](skill.md) link. It learns when and how to use each Reach tool — dryrun before destructive commands, structured stats instead of shell parsing, atomic file writes.
 
-**Or install manually:**
+**Install the binary:**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/agent-0x/reach/master/install.sh | bash
